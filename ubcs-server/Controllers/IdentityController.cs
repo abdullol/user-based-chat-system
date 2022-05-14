@@ -22,7 +22,7 @@ namespace ubcs_server.Controllers
         public IdentityController(UserManager<User> userManager,
             IOptions<AppSettings> appSettings)
         {
-            this.userManager = userManager; 
+            this.userManager = userManager;
             this.appSettings = appSettings.Value;
         }
 
@@ -48,7 +48,7 @@ namespace ubcs_server.Controllers
         public async Task<IActionResult> Login(LoginRequestModel model)
         {
             var user = await userManager.FindByNameAsync(model.UserName);
-            if (user==null)
+            if (user == null)
             {
                 return Unauthorized();
             }
@@ -65,7 +65,13 @@ namespace ubcs_server.Controllers
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity
-                (new Claim[] { new Claim(ClaimTypes.Name, user.Id.ToString()) }),
+                (
+                    new[] 
+                    {
+                        new Claim(ClaimTypes.NameIdentifier, user.Id),
+                        new Claim(ClaimTypes.Name, user.UserName)
+                    }
+                ),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
