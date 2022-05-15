@@ -31,47 +31,13 @@ namespace ubcs_server
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var appsettings = services.GetApplicationSettings(Configuration);
+
             services.AddDbContext<UbcsDbContext>(options => options.UseSqlServer(
-                    Configuration.GetConnectionString("DefaultConnection")));
-            //services.AddDatabaseDeveloperPageExceptionFilter();
-
-            services
-                .AddIdentity<User, IdentityRole>(options=>
-                {
-                    options.Password.RequiredLength = 6;
-                    options.Password.RequireDigit = false;
-                    options.Password.RequireLowercase = false;
-                    options.Password.RequireNonAlphanumeric = false;
-                    options.Password.RequireUppercase = false;
-                })
-                .AddEntityFrameworkStores<UbcsDbContext>();
-
-            var applicationSettingsConfigurations = this.Configuration.GetSection("ApplicationSettings");
-            services.Configure<AppSettings>(applicationSettingsConfigurations);
-
-            var appsettings = applicationSettingsConfigurations.Get<AppSettings>();
-            var key = Encoding.ASCII.GetBytes(appsettings.Secret);
-
-            services
-                .AddAuthentication(x =>
-                {
-                    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                })
-                .AddJwtBearer(x =>
-                {
-                    x.RequireHttpsMetadata = false;
-                    x.SaveToken = true;
-                    x.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(key),
-                        ValidateIssuer = false,
-                        ValidateAudience = false
-                    };
-                });
-
-            services.AddControllers();
+                     Configuration.GetDefaultConnectionString()))
+            .AddIdentity()
+            .AddJwtAuthentication(appsettings)
+            .AddControllers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -84,26 +50,27 @@ namespace ubcs_server
                 app.UseDatabaseErrorPage();
             }
 
-            app.UseHttpsRedirection();
-            app.UseStaticFiles();
+            app
+                .UseHttpsRedirection()
+                .UseStaticFiles()
 
-            app.UseRouting();
+                .UseRouting()
 
-            app.UseCors(option => option
-            .AllowAnyOrigin()
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            );
+                .UseCors(option => option
+                .AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                )
 
-            app.UseAuthentication();
-            app.UseAuthorization();
+                .UseAuthentication()
+                .UseAuthorization()
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+                .UseEndpoints(endpoints =>
+                {
+                    endpoints.MapControllers();
+                })
 
-            app.ApplyMigrations();
+                .ApplyMigrations();
         }
     }
 }

@@ -8,7 +8,6 @@ namespace ubcs_server.Models.Cats
 {
     public class CreateCatRequestModel
     {
-        [Required]
         [MaxLength(2000)]
         public string Description { get; set; }
         [Required]
